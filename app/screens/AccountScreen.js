@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function DetailsScreen() {
+export default function AccountScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Это экран с подробностями 📋</Text>
+      <Text style={styles.text}>Аккаунт</Text>
     </View>
   );
 }
@@ -14,10 +14,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1E1E1E',
   },
   text: {
-    fontSize: 18,
-    color: '#333',
+    fontSize: 24,
+    color: '#F9F9F9',
   },
 });
