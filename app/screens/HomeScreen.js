@@ -14,17 +14,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const screenWidth = Dimensions.get('window').width;
 
+// --- ЦВЕТА ---
+const accentColor = '#8234F7';   // Фиолетовый (остается для кнопок и градиентов)
+const positiveColor = '#25CD25'; // Зеленый (для положительного +)
+const negativeColor = '#FF9D00'; // Оранжевый (для отрицательного -)
+
 // -----------------------------------------------------------
 // 1. Компонент Кругового Индикатора (CircularGauge)
 // -----------------------------------------------------------
-const CircularGauge = ({ percentage, color1, color2, radius = 50, strokeWidth = 10 }) => {
+const CircularGauge = ({ percentage, unit, color1, color2, radius = 50, strokeWidth = 10 }) => {
   const circumference = 2 * Math.PI * radius;
   const totalLength = circumference; 
+  const roundedPercentage = Math.round(percentage); 
   const progressFactor = Math.min(percentage / 100, 1);
   const progressDash = totalLength * progressFactor;
   const strokeDashoffset = totalLength - progressDash;
   
   const rotation = 90; 
+  const innerRadius = radius - strokeWidth / 2;
 
   return (
     <View style={{ width: radius * 2, height: radius * 2, alignItems: 'center', justifyContent: 'center' }}>
@@ -45,7 +52,7 @@ const CircularGauge = ({ percentage, color1, color2, radius = 50, strokeWidth = 
         <Circle
           cx={radius}
           cy={radius}
-          r={radius - strokeWidth / 2}
+          r={innerRadius}
           fill="none"
           stroke="#444444" 
           strokeWidth={strokeWidth}
@@ -55,7 +62,7 @@ const CircularGauge = ({ percentage, color1, color2, radius = 50, strokeWidth = 
         <Circle
           cx={radius}
           cy={radius}
-          r={radius - strokeWidth / 2}
+          r={innerRadius}
           fill="none"
           stroke="url(#gradient)" 
           strokeWidth={strokeWidth}
@@ -65,9 +72,12 @@ const CircularGauge = ({ percentage, color1, color2, radius = 50, strokeWidth = 
         />
       </Svg>
       
-      {/* Отображение процента заполнения внутри круга */}
+      {/* Отображение значения и единицы измерения */}
       <View style={styles.gaugeInnerTextContainer}>
-          <Text style={styles.gaugeInnerText}>{percentage}%</Text>
+          <Text style={styles.gaugeInnerText}>
+              {roundedPercentage}
+              {unit}
+          </Text>
       </View>
     </View>
   );
@@ -76,61 +86,69 @@ const CircularGauge = ({ percentage, color1, color2, radius = 50, strokeWidth = 
 // -----------------------------------------------------------
 // 2. Компонент Карточки Показателей (MetricCard)
 // -----------------------------------------------------------
-const MetricCard = ({ title, value, changeValue, changeText, percentage, color1, color2 }) => (
-  <View style={styles.metricCard}>
-    
-    <Text style={styles.metricCardTitle}>{title}</Text> 
+const MetricCard = ({ title, changeText, percentage, unit, isPositiveChange, color1, color2 }) => {
+  
+  // ИЗМЕНЕНИЕ ЗДЕСЬ: Если isPositiveChange false, берем оранжевый (negativeColor)
+  const changeColor = isPositiveChange ? positiveColor : negativeColor;
+  
+  return (
+    <View style={styles.metricCard}>
+      
+      <Text style={styles.metricCardTitle}>{title}</Text> 
 
-    {/* 2. Круговой Индикатор с внутренним текстом */}
-    <View style={styles.gaugeCenterContainer}>
-      <CircularGauge
-        percentage={percentage}
-        color1={color1}
-        color2={color2}
-        radius={50} 
-        strokeWidth={10}
-      />
+      {/* 2. Круговой Индикатор */}
+      <View style={styles.gaugeCenterContainer}>
+        <CircularGauge
+          percentage={percentage}
+          unit={unit} 
+          color1={color1}
+          color2={color2}
+          radius={50} 
+          strokeWidth={10}
+        />
+      </View>
+      <View style={styles.changeRow}>
+          <Text style={styles.metricChangeText}>
+              Изменилось на 
+              <Text style={{ color: changeColor, fontWeight: 'bold' }}>
+                  {' '}{changeText}
+              </Text>
+          </Text>
+      </View>
     </View>
-
-    {/* 4. Значение Изменения (7% / 3%) */}
-    <View style={styles.changeRow}>
-        {/* Значение изменения */}
-        <Text style={styles.metricChangeValueHighlighted}>{changeValue}</Text>
-        {/* Unicode стрелка */}
-        <Text style={styles.changeArrowUnicode}>{' \u2197'}</Text>
-    </View>
-    
-    {/* Текст Изменения */}
-    <Text style={styles.metricChangeText}>{changeText}</Text>
-  </View>
-);
+  );
+};
 
 // -----------------------------------------------------------
 // 3. Компонент Карточки ИИ-Анализа (AnalysisCard)
 // -----------------------------------------------------------
-const AnalysisCard = ({ title, description, isDone = true }) => (
-  <View style={styles.analysisCard}>
-    <Text style={styles.analysisTitle}>{title}</Text>
-    <Text style={styles.analysisDescription}>
-      {description}
-    </Text>
-    <TouchableOpacity
-      style={[
-        styles.actionButton,
-        isDone ? styles.actionButtonDone : styles.actionButtonPending
-      ]}
-      onPress={() => console.log('Action Pressed')}
-    >
-      <Icon
-        name={isDone ? "checkmark-circle" : "alert-circle"}
-        size={18}
-        color="#F9F9F9"
-        style={styles.checkIcon}
-      />
-      <Text style={styles.buttonText}>{isDone ? 'Выполнено' : 'Не выполнено'}</Text>
-    </TouchableOpacity>
-  </View>
-);
+const AnalysisCard = ({ title, description, isDone = true }) => {
+  // Используем accentColor для кнопок, чтобы сохранить стиль
+  
+  return (
+    <View style={styles.analysisCard}>
+      <Text style={styles.analysisTitle}>{title}</Text>
+      <Text style={styles.analysisDescription}>
+        {description}
+      </Text>
+      <TouchableOpacity
+        style={[
+          styles.actionButton,
+          isDone ? styles.actionButtonDone : styles.actionButtonPending
+        ]}
+        onPress={() => console.log('Action Pressed')}
+      >
+        <Icon
+          name={isDone ? "checkmark-circle" : "alert-circle"}
+          size={18}
+          color="#F9F9F9"
+          style={styles.checkIcon}
+        />
+        <Text style={styles.buttonText}>{isDone ? 'Выполнено' : 'Не выполнено'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 // -----------------------------------------------------------
 // 6. Основной Компонент Экрана (HomeScreen)
@@ -149,32 +167,33 @@ export default function HomeScreen() {
         style={[styles.scrollView]}
         contentContainerStyle={{ 
             paddingTop: topPadding, 
-            paddingBottom: navBarHeight - 25
+            paddingBottom: navBarHeight + 20 
         }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Дэшборд</Text>
+          <Icon name="ellipsis-vertical" size={24} color="#F9F9F9" />
         </View>
 
         {/* Секция Показателей */}
         <View style={styles.metricsContainer}>
           <MetricCard
             title="Влажность"
-            value="15%" 
-            changeValue="7%" 
-            changeText="Increase compared to last week" 
-            percentage={75} 
-            color1="#8234F7" 
+            changeText=" +1,8%" 
+            percentage={75.7} 
+            unit="%" 
+            isPositiveChange={true} 
+            color1={accentColor} 
             color2="#e2dbffff" 
           />
           <MetricCard
             title="Температура"
-            value="23%" 
-            changeValue="3%" 
-            changeText="Increase compared to last week"
-            percentage={40} 
-            color1="#8234F7" 
+            changeText=" -3,5%"
+            percentage={18.4} 
+            unit="°C" 
+            isPositiveChange={false} 
+            color1={accentColor} 
             color2="#e2dbffff"
           />
         </View>
@@ -234,9 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gaugeInnerText: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#F9F9F9',
+    fontSize: 18, 
+    fontWeight: 'bold',
+    color: '#F9F9F9',
   },
 
   // Стили для Показателей
@@ -250,7 +269,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2D2D2D', 
     borderRadius: 15,
     padding: 15,
-    alignItems: 'flex-start',
+    alignItems: 'center', 
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 5,
@@ -268,29 +287,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  
   changeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5, 
-    alignSelf: 'flex-start', 
-  },
-  
-  changeArrowUnicode: {
-    fontSize: 22, 
-    color: '#25CD25', 
-    fontWeight: 'bold', 
-    marginLeft: 3,
-  },
-  
-  metricChangeValueHighlighted: {
-    fontSize: 23, 
-    color: '#F9F9F9',
-    fontWeight: 'bold',
-  },
-  metricChangeText: {
-    fontSize: 13,
-    color: '#BDBDBD',
     alignSelf: 'flex-start',
+  },
+
+  metricChangeText: {
+    fontSize: 14,
+    color: '#BDBDBD', 
   },
 
   // Стили для ИИ-Анализа
@@ -329,10 +335,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   actionButtonDone: {
-    backgroundColor: '#25CD25', 
+    backgroundColor: positiveColor, 
   },
   actionButtonPending: {
-    backgroundColor: '#8234F7', 
+    backgroundColor: accentColor, 
   },
   checkIcon: {
     marginRight: 5,
